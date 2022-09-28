@@ -50,7 +50,7 @@ contract Web3RSVP {
         address[] memory confirmedRSVPs;
         address[] memory claimedRSVPs;
 
-        // this creates a new CreateEcent struct and adds it to the idToEvent mapping
+        // this creates a new CreateEvent struct and adds it to the idToEvent mapping
         idToEvent[eventId] = CreateEvent(
             eventId,
             eventDataCID,
@@ -61,7 +61,7 @@ contract Web3RSVP {
             confirmedRSVPs,
             claimedRSVPs,
             false
-        )
+        );
 
         emit NewEventCreated(
             eventId,
@@ -75,22 +75,22 @@ contract Web3RSVP {
 
     function createNewRSVP(bytes32 eventId) external payable {
         // look up event from the mapping
-        CreateEvent storage myEvent = idToEvent[evenitId];
+        CreateEvent storage myEvent = idToEvent[eventId];
 
         // transfer deposit to our contract / require that they send in enough ETH to cover the deposit requirement of this specific event
-        require(msg.value == myEvent.deposit, "NOT ENOUGH")
+        require(msg.value == myEvent.deposit, "NOT ENOUGH");
         // require that the event hasn't already happened (<eventTimestamp)
-        require(block.timestamp <= myEvent.eventTimestamp, "ALREADY HAPPENED")
+        require(block.timestamp <= myEvent.eventTimestamp, "ALREADY HAPPENED");
 
         // make sure the event is under max capacity
         require(
             myEvent.confirmedRSVPs.length < myEvent.maxCapacity,
             "This event has already reach its capacity"
-        )
+        );
 
         // require that msg.sender isn't already in myEvent.confirmedRSVPs AKA hasn't already responded
         for (uint8 i = 0; i < myEvent.confirmedRSVPs.length; i++) {
-            require(myEvent.confirmedRSVPs[i] !== msg.sender, "ALREADY CONFIRMED");
+            require(myEvent.confirmedRSVPs[i] != msg.sender, "ALREADY CONFIRMED");
 
             myEvent.confirmedRSVPs.push(payable(msg.sender));
         }
@@ -103,10 +103,9 @@ contract Web3RSVP {
         CreateEvent storage myEvent = idToEvent[eventId];
 
         //  require that the msg.sender is the owner of the vent - ony the host should be able to check people in
-        require(msg.sender == myEvent.eventOwner, "NOT AUTHORIZED")
+        require(msg.sender == myEvent.eventOwner, "NOT AUTHORIZED");
 
-        // require that attendee trying to check in actually responsded
-
+        // require that attendee trying to check in actually responded
         address rsvpConfirm;
 
         for (uint8 i = 0; i < myEvent.confirmedRSVPs.length; i++) {
@@ -115,25 +114,25 @@ contract Web3RSVP {
             }
         }
 
-        require(rsvpConfirm == atendee, "NO RSVP TO CONFIRM")
+        require(rsvpConfirm == attendee, "NO RSVP TO CONFIRM");
 
         // require that attendee is not already in the claimedRSPVs list AKA make sure they haven't already checked in
-        for (uint8 i = 0; i < myEvent.claimedRSPVs.length; i++) {
-            require(myEvent.claimedRSPVs[i] !== attendee, "ALREADY CONFIRMED");
+        for (uint8 i = 0; i < myEvent.claimedRSVPs.length; i++) {
+            require(myEvent.claimedRSVPs[i] != attendee, "ALREADY CONFIRMED");
         }
 
         // require that despoits are not already claimed by the event owner
-        require(myEvent.paidOut === false, "ALREADY PAID OUT");
+        require(myEvent.paidOut == false, "ALREADY PAID OUT");
 
         // add the attendee to the claimedRSVPs list
-        myEvent.claimedRSPVs.push(attendee);
+        myEvent.claimedRSVPs.push(attendee);
 
         // seind eth back to the staker
         (bool sent,) = attendee.call{value: myEvent.deposit}("");
 
         // if this fails, remove the user from the array of claimed RSVPs
         if(!sent) {
-            myEvent.claimedRSPVs.pop();
+            myEvent.claimedRSVPs.pop();
         }
 
         require(sent, "Failed to send Ether");
@@ -150,7 +149,7 @@ contract Web3RSVP {
 
         // confirm each attendee in the rsvp array
         for (uint8 i = 0; i < myEvent.confirmedRSVPs.length; i++) {
-            confirmAttendee(eventId, myevent.confirmedRSVPs[i]);
+            confirmAttendee(eventId, myEvent.confirmedRSVPs[i]);
         }
     }
 
@@ -171,22 +170,22 @@ contract Web3RSVP {
         require(msg.sender == myEvent.eventOwner, "MUST BE EVENT OWNER");
 
         // calculate how many people didn't claim by comparing the lengths of arrays
-        uint256 unclaimed = myEvent.confirmedRSVPs.length - myEvent.claimedRSPVs.length
+        uint256 unclaimed = myEvent.confirmedRSVPs.length - myEvent.claimedRSVPs.length;
 
-        uint256 payout - uncliamed * myEvent.deposit;
+        uint256 payout = unclaimed * myEvent.deposit;
 
         // mark as paid before sending to avoid reentrancy attack
-        myEvent.paidOut == trye;
+        myEvent.paidOut = true;
 
         // send the pyaout to the owner
-        (bool sent,) = msg.sender.call{value: pyaout}(");
+        (bool sent,) = msg.sender.call{value: payout}("");
 
         // if it fails, set paidOut to false
-        // if (!sent) {
+        if (!sent) {
             myEvent.paidOut = false;
         }
 
-        require(sent, "Failed to send ether")
+        require(sent, "Failed to send ether");
 
         emit DepositsPaidOut(eventId);
     }

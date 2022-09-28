@@ -63,6 +63,14 @@ contract Web3RSVP {
             false
         )
 
+        emit NewEventCreated(
+            eventId,
+            msg.sender,
+            eventTimestamp,
+            maxCapacity,
+            deposit,
+            eventDataCID
+        );
     }
 
     function createNewRSVP(bytes32 eventId) external payable {
@@ -86,6 +94,8 @@ contract Web3RSVP {
 
             myEvent.confirmedRSVPs.push(payable(msg.sender));
         }
+
+        emit NewRSVP(eventId, msg.sender);
     }
 
     function confirmAttendee(bytes32 eventId, address attendee) public {
@@ -127,9 +137,11 @@ contract Web3RSVP {
         }
 
         require(sent, "Failed to send Ether");
+
+        emit ConfirmedAttendee(eventId, attendee);
     }
 
-    funciton confirmAllAttendees(bytes32 eventId) external {
+    function confirmAllAttendees(bytes32 eventId) external {
         // look up event from our struct
         CreateEvent memory myEvent = idToEvent[eventId];
 
@@ -174,6 +186,8 @@ contract Web3RSVP {
             myEvent.paidOut = false;
         }
 
-        rquire(sent, "Failed to send ether")
+        require(sent, "Failed to send ether")
+
+        emit DepositsPaidOut(eventId);
     }
 }
